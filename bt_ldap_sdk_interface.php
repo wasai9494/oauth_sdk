@@ -1,11 +1,13 @@
 <?php
 namespace btldapsdk;
 
-class Bt_ldap_sdk_interface 
+interface Bt_ldap_sdk_interface 
 {
-    public function login ( );
+    public function __construct(  $appid, $appkey, $type );
+    
+    public function login ();
     
     public function checkToken ( $token );
     
-    public function getInfo ( $token );
+    public function getInfo ( $token, Array $fields );
 }

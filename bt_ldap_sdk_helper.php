@@ -28,18 +28,19 @@ class Bt_ldap_sdk_helper
         {
             $postdata = http_build_query($postdata);
         }
-        
-        $opts = array('http' =>
-            array(
-                'method'  => 'POST',
-                'header'  => 'Content-type: application/x-www-form-urlencoded',
-                'content' => $postdata
-            )
-        );
-        
-        $context  = @stream_context_create($opts);
-        
-        return file_get_contents($url, false, $context);
+        $curl_handle=curl_init();
+        curl_setopt($curl_handle, CURLOPT_URL,$url);
+        curl_setopt($curl_handle, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($curl_handle, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt_array ( $curl_handle,  
+                array (
+                        CURLOPT_POSTFIELDS => $postdata, 
+                        CURLOPT_POST => true,
+				        CURLOPT_HTTPGET => false )
+                );
+        $query = curl_exec($curl_handle);
+        curl_close($curl_handle);
+        return $query;
     }
 }
 
