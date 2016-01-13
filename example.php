@@ -4,14 +4,33 @@ use btldapsdk\Bt_ldap_sdk;
 
 require_once 'index.php';
 
-$bt = new Bt_ldap_sdk('1000','123','http://192.168.99.100:3000/');
+$config = [
+    'appid' => 1000,
+    'appkey'   => 123,
+];
 
-if ( $_GET['token'] )
+$bt = new Bt_ldap_sdk($config);
+
+if ( $_GET['logout'] )
 {
-    $result = $bt->checkToken($_GET['token']);
-    echo $result;
+    $bt->setLogout();
 }
-else
+elseif ( $_GET['login'] || $_GET['BabelTimeToken'] )
 {
-    $bt->login();
+    $result = $bt->oauth();
+    
+    if ( $result->status )
+    {
+        echo '登录成功 欢迎' . $result->info->username . PHP_EOL;
+        echo '<a href="?logout=1">退出</a>';
+    }
+    else
+    {
+        echo '登录失败';
+    }
+}
+
+if ( !$bt->isLogin() )
+{
+    echo '<a href="?login=1">登录</a>';
 }

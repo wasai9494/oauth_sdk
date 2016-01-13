@@ -10,14 +10,83 @@ class Bt_ldap_sdk implements Bt_ldap_sdk_interface
     private $type;
     private $callback;
     
-    public function __construct( $appid, $appkey, $callback, $type = 'md5')
+    public function __construct( Array $config )
     {
-        $this->appid = $appid;
-        $this->appkey = $appkey;
-        $this->type = $type;
-        $this->callback = $callback;
+        $this->setConfig( $config );
     }
-
+    
+    /**
+     * {@inheritDoc}
+     * @see \btldapsdk\Bt_ldap_sdk_interface::setConfig()
+     */
+    public function setConfig ( Array $config )
+    {
+        foreach ( $config as $key=>$value )
+        {
+            $this->$key = $value;
+        }
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \btldapsdk\Bt_ldap_sdk_interface::isLogin()
+     */
+    public function isLogin ( )
+    {
+        return !empty($_SESSION['BabelTimeOAuthLogin']);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \btldapsdk\Bt_ldap_sdk_interface::setLogin()
+     */
+    public function setLogin ( $username )
+    {
+        if ( !$username )
+        {
+            throw new \Exception('username err');
+        }
+        
+        $_SESSION['BabelTimeOAuthLogin'] = $username;
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \btldapsdk\Bt_ldap_sdk_interface::setLogout()
+     */
+    public function setLogout ( )
+    {
+        unset($_SESSION['BabelTimeOAuthLogin']);
+    }
+    
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \btldapsdk\Bt_ldap_sdk_interface::oauth()
+     */
+    public function oauth ( )
+    {
+        if ( $this->isLogin() == true )
+        {
+            return true;
+        }
+        
+        if ( empty(($token = $_GET['BabelTimeToken'])) )
+        {
+            $this->login();
+        }
+        
+        if ( ($result = $this->checkToken($token)) && $result->status == true )
+        {
+            $this->setLogin( $result->info->username );
+        }
+            
+        return $result;
+}
+    
     /**
      * 转到登陆页面
      * {@inheritDoc}
@@ -27,7 +96,6 @@ class Bt_ldap_sdk implements Bt_ldap_sdk_interface
     {
         $data = [
             'appid'     => $this->appid,
-            'callback'  => $this->callback,
             'ts'        => time(),
         ];
         
@@ -45,7 +113,9 @@ class Bt_ldap_sdk implements Bt_ldap_sdk_interface
         
         $url = $this->tokenUrl . '/check';
      
-        return Bt_ldap_sdk_helper::http( $url, $data);
+        $result = Bt_ldap_sdk_helper::http( $url, $data);
+        
+        return json_decode($result);
     }
     
     public function getInfo ( $token, array $fields )
