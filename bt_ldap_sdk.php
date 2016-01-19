@@ -1,4 +1,19 @@
 <?php
+/***************************************************************************
+ *
+ * Copyright (c) 2016 babeltime.com, Inc. All Rights Reserved
+ * $Id: $
+ *
+ **************************************************************************/
+/**
+ *
+ * @Author: $LastChangedBy: (machao@babeltime.com) $
+ * @Version: $LastChangedRevision:$
+ * @LastDate: $LastChangedDate:$
+ * @file: $HeadURL:$
+ *
+ **/
+
 namespace btldapsdk;
 
 class Bt_ldap_sdk implements Bt_ldap_sdk_interface
@@ -73,19 +88,27 @@ class Bt_ldap_sdk implements Bt_ldap_sdk_interface
         {
             return true;
         }
-        
+
         if ( empty(($token = $_GET['BabelTimeToken'])) )
         {
             $this->login();
         }
-        
+       
         if ( ($result = $this->checkToken($token)) && $result->status == true )
         {
             $this->setLogin( $result->info->username );
         }
             
         return $result;
-}
+    }
+    
+    public function rePasswd ( )
+    {
+        $goto = $this->userUrl .'/repasswd?' . $this->getSign();
+        
+        header('Location:' . $goto);
+        exit;
+    }
     
     /**
      * 转到登陆页面
@@ -94,17 +117,23 @@ class Bt_ldap_sdk implements Bt_ldap_sdk_interface
      */
     public function login ( )
     {
+        $goto = $this->userUrl .'/login?' . $this->getSign();
+
+        header('Location:' . $goto);
+        exit;
+    }
+    
+    public function getSign ()
+    {
         $data = [
-            'appid'     => $this->appid,
-            'ts'        => time(),
+                'appid'     => $this->appid,
+                'ts'        => time(),
+                'redirect'  => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/' . $_SERVER['REQUEST_URI'],
         ];
         
         $data['sign'] = Bt_ldap_sdk_helper::enCode( $this->type, $data, $this->appkey);
         
-        $goto = $this->userUrl .'/login?' . http_build_query($data);
-
-        header('Location:' . $goto);
-        exit;
+        return http_build_query($data);
     }
     
     public function checkToken( $token )
